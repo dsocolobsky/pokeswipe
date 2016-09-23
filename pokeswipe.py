@@ -51,9 +51,6 @@ twapi = twitter.Api(consumer_key=twitter_data['consumer_key'],
                   access_token_key=twitter_data['access_token_key'],
                   access_token_secret=twitter_data['access_token_secret'])
 
-
-print(twapi)
-
 while True:
     for cor in coordinates['coordinates']:
         parameters = makeTuple(cor['lat'], cor['lon'])
@@ -65,20 +62,14 @@ while True:
         while "overload" in r.text:
             r = requests.get("https://api.fastpokemap.se", params=parameters, headers=headers)
 
-        print("START")
         try:
-            print("CARGANDO")
             parsed = json.loads(r.text)
-            print("CARGADO")
         except ValueError:
-            print("ERROR")
             pass
-
-        print("FINISH")
 
         desc = cor['description']
         
-        if 'result' in parsed and parsed['result']:
+        if 'result' in parsed:
             for pokemon in parsed['result']:
                 pokeid = pokemon['pokemon_id']
                 print(pokeid)
