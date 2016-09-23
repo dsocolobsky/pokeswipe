@@ -10,57 +10,15 @@ scanned = []
 def makePokeURL(lat, lon):
     return "https://fastpokemap.se/#{},{}".format(lat, lon)
 
-
 def makeTuple(lat, lon):
     return (('key', 'allow-all'), ('ts', '0'), ('lat', lat), ('lng', lon))
-
 
 def generateAlert(pokemon, lugar, url):
     return "{} en {} {}".format(pokemon, lugar, url)
 
-
 def removePokemon(tple):
     print("Removing {} {}".format(tple[0], tple[1]))
-    scanned.remove(tple)
-
-
-def scan(cor):
-    parameters = makeTuple(cor['lat'], cor['lon'])
-
-    r = requests.get("https://api.fastpokemap.se",
-                     params=parameters, headers=headers)
-    url = makePokeURL(cor['lat'], cor['lon'])
-    print("Escaneando {}".format(cor['description']))
-
-    while "overload" in r.text:
-        r = requests.get("https://api.fastpokemap.se",
-                         params=parameters, headers=headers)
-
-    try:
-        parsed = json.loads(r.text)
-    except ValueError:
-        pass
-
-    desc = cor['description']
-
-    if 'result' in parsed:
-        for pokemon in parsed['result']:
-            pokeid = pokemon['pokemon_id']
-            print(pokeid)
-            tple = (pokeid, desc)
-            if pokeid in pokemon_list and tple not in scanned:
-                scanned.append((pokeid, desc))
-                threading.Timer(600, removePokemon, args=[tple]).start()
-                update = "{}: {}".format(
-                    index, generateAlert(pokeid, desc, url))
-                print(update)
-                twapi.PostUpdate(update)
-                index = index + 1
-
-                with open('index.pkl', 'wb') as index_file:
-                    pickle.dump(index, index_file)
-                    index_file.close()
-
+    scanned.remove(tple)    
 
 with open('twitter.json') as twitter_file:
     twitter_data = json.load(twitter_file)
@@ -89,10 +47,42 @@ headers = {
 }
 
 twapi = twitter.Api(consumer_key=twitter_data['consumer_key'],
-                    consumer_secret=twitter_data['consumer_secret'],
-                    access_token_key=twitter_data['access_token_key'],
-                    access_token_secret=twitter_data['access_token_secret'])
+                  consumer_secret=twitter_data['consumer_secret'],
+                  access_token_key=twitter_data['access_token_key'],
+                  access_token_secret=twitter_data['access_token_secret'])
 
 while True:
     for cor in coordinates['coordinates']:
-        scan(cor)
+        parameters = makeTuple(cor['lat'], cor['lon'])
+
+        r = requests.get("https://api.fastpokemap.se", params=parameters, headers=headers)
+        url = makePokeURL(cor['lat'], cor['lon'])
+        print("Escaneando {}".format(cor['description']))
+
+        while "overload" in r.text:
+            r = requests.get("https://api.fastpokemap.se", params=parameters, headers=headers)
+
+        try:
+            parsed = json.loads(r.text)
+        except ValueError:
+            pass
+
+        desc = cor['description']
+        
+        if 'result' in parsed:
+            for pokemon in parsed['result']:
+                pokeid = pokemon['pokemon_id']
+                print(pokeid)
+                tple = (pokeid, desc)
+                if pokeid in pokemon_list and tple not in scanned:
+                    scanned.append((pokeid, desc))
+                    threading.Timer(600, removePokemon, args=[tple]).start()
+                    update = "{}: {}".format(index, generateAlert(pokeid, desc, url))
+                    print(update)
+                    twapi.PostUpdate(update)
+                    index = index + 1
+
+                    with open('index.pkl', 'wb') as index_file:
+                        pickle.dump(index, index_file)
+                        index_file.close()
+                
