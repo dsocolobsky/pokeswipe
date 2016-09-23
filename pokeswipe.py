@@ -6,7 +6,7 @@ import threading
 import pickle
 
 scanned = []
-
+index = 0
 
 def makePokeURL(lat, lon):
     return "https://fastpokemap.se/#{},{}".format(lat, lon)
@@ -83,8 +83,7 @@ def scan(cor):
             if pokeid in pokemon_list and tple not in scanned:
                 scanned.append((pokeid, desc))
                 threading.Timer(600, removePokemon, args=[tple]).start()
-                update = "{}: {}".format(
-                    index, generateAlert(pokeid, desc, url))
+                update = "{}: {}".format(index, generateAlert(pokeid, desc, url))
                 print(update)
                 twapi.PostUpdate(update)
                 index = index + 1
