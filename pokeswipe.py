@@ -3,6 +3,7 @@ import requests
 import json
 import twitter
 import threading
+import pickle
 
 scanned = []
 
@@ -17,7 +18,7 @@ def generateAlert(pokemon, lugar, url):
 
 def removePokemon(tple):
     print("Removing {} {}".format(tple[0], tple[1]))
-    scanned.remove(tple)
+    scanned.remove(tple)    
 
 with open('twitter.json') as twitter_file:
     twitter_data = json.load(twitter_file)
@@ -28,6 +29,12 @@ with open('coordinates.json') as coords_file:
 with open('pokemons.json') as poke_file:
     pokemon_json = json.load(poke_file)
     pokemon_list = pokemon_json['pokemons']
+
+with open('index.pkl', 'rb') as index_file:
+    index = pickle.load(index_file)
+    index_file.close()
+
+print("Index: {}".format(index))
 
 headers = {
     'Origin': 'https://fastpokemap.se',
@@ -53,20 +60,38 @@ while True:
 
         r = requests.get("https://api.fastpokemap.se", params=parameters, headers=headers)
         url = makePokeURL(cor['lat'], cor['lon'])
-        print("{} (url: {}):".format(cor['description'], url))
+        print("Escaneando {}".format(cor['description']))
 
         while "overload" in r.text:
             r = requests.get("https://api.fastpokemap.se", params=parameters, headers=headers)
 
-        parsed = json.loads(r.text)
-        desc = cor['description']
+        print("START")
+        try:
+            print("CARGANDO")
+            parsed = json.loads(r.text)
+            print("CARGADO")
+        except ValueError:
+            print("ERROR")
+            pass
 
-        for pokemon in parsed['result']:
-            pokeid = pokemon['pokemon_id']
-            tple = (pokeid, desc)
-            if pokeid in pokemon_list and tple not in scanned:
-                scanned.append((pokeid, desc))
-                threading.Timer(600, removePokemon, args=[tple]).start()
-                status = twapi.PostUpdate(generateAlert(pokeid, desc, url))
-                print(status)
+        print("FINISH")
+
+        desc = cor['description']
+        
+        if 'result' in parsed and parsed['result']:
+            for pokemon in parsed['result']:
+                pokeid = pokemon['pokemon_id']
+                print(pokeid)
+                tple = (pokeid, desc)
+                if pokeid in pokemon_list and tple not in scanned:
+                    scanned.append((pokeid, desc))
+                    threading.Timer(600, removePokemon, args=[tple]).start()
+                    update = "{}: {}".format(index, generateAlert(pokeid, desc, url))
+                    print(update)
+                    twapi.PostUpdate(update)
+                    index = index + 1
+
+                    with open('index.pkl', 'wb') as index_file:
+                        pickle.dump(index, index_file)
+                        index_file.close()
                 

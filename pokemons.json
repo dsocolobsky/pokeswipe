@@ -1,4 +1,5 @@
 { "pokemons": [
+    "MAGIKARP",
     "IVYSAUR",
     "VENUSAUR",
     "CHARMANDER",
@@ -6,8 +7,6 @@
     "CHARIZARD",
     "WARTORTLE",
     "BLASTOISE",
-    "BEEDRILL",
-    "PIDGEOT",
     "FEARROW",
     "ARBOK",
     "PIKACHU",
@@ -76,7 +75,6 @@
     "RHYHORN",
     "RHYDON",
     "CHANSEY",
-    "TANGELA",
     "KANGASKHAN",
     "SEADRA",
     "SEAKING",
